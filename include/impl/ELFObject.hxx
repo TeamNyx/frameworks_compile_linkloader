@@ -379,7 +379,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
 
     case R_MIPS_HI16:
       A = A & 0xFFFF;
-      *inst |= (((S + A + 0xFFFF8000) >> 16) & 0xFFFF);
+      *inst |= (((S + A + 0x8000) >> 16) & 0xFFFF);
       break;
 
     case R_MIPS_LO16:
