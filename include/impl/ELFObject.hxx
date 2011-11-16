@@ -162,6 +162,8 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
         A = (Inst_t)(int64_t)SIGN_EXTEND(*inst & 0xFFFFFF, 24);
 #undef SIGN_EXTEND
 
+        void *callee_addr = sym->getAddress();
+
         switch (sym->getType()) {
         default:
           rsl_assert(0 && "Wrong type for R_ARM_CALL relocation.");
@@ -169,7 +171,10 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           break;
 
         case STT_FUNC:
-          if (S == 0) {
+          // NOTE: Callee function is in the object file, but it may be
+          // in different PROGBITS section (which may be far call).
+
+          if (callee_addr == 0) {
             rsl_assert(0 && "We should get function address at previous "
                    "sym->getAddress() function call.");
             abort();
@@ -177,37 +182,32 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           break;
 
         case STT_NOTYPE:
-          if (S == 0) {
-            void *ext_func = find_sym(context, sym->getName());
-#ifdef SUPPORT_NEAR_JUMP_EVEN_IF_BLc2BLX_NEEDED
-            S = (Inst_t)(uintptr_t)ext_func;
-            sym->setAddress(ext_func);
+          // NOTE: Callee function is an external function.  Call find_sym
+          // if it has not resolved yet.
 
-            uint32_t result = (S >> 2) - (P >> 2) + A;
-            if (result > 0x007fffff && result < 0xff800000) {
-#endif
-#ifndef __arm__
-              // We have not implement function stub in this runtime env
-              rsl_assert(0 && "Target address is far from call instruction");
-              abort();
-#else
-              void *stub = text->getStubLayout()->allocateStub(ext_func);
-              if (!stub) {
-                llvm::errs() << "unable to allocate stub." << "\n";
-                exit(EXIT_FAILURE);
-              }
-
-              //out() << "stub: for " << ext_func << " at " << stub << "\n";
-              sym->setAddress(stub);
-              S = (uint32_t)stub;
-#endif
-#ifdef SUPPORT_NEAR_JUMP_EVEN_IF_BLc2BLX_NEEDED
-            }
-#endif
+          if (callee_addr == 0) {
+            callee_addr = find_sym(context, sym->getName());
+            sym->setAddress(callee_addr);
           }
           break;
         }
 
+#if __arm__
+        // Get the stub for this function
+        void *stub = text->getStubLayout()->allocateStub(callee_addr);
+
+        if (!stub) {
+          llvm::errs() << "unable to allocate stub." << "\n";
+          abort();
+        }
+
+        //LOGI("Function %s: using stub %p\n", sym->getName(), stub);
+        S = (uint32_t)stub;
+#else
+        S = (uint32_t)callee_addr;
+#endif
+
+        // Relocate the R_ARM_CALL relocation type
         uint32_t result = (S >> 2) - (P >> 2) + A;
 
         if (result > 0x007fffff && result < 0xff800000) {

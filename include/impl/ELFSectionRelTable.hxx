@@ -17,7 +17,13 @@
 #ifndef ELF_SECTION_REL_TABLE_HXX
 #define ELF_SECTION_REL_TABLE_HXX
 
+#include "ELF.h"
+#include "ELFHeader.h"
+#include "ELFObject.h"
 #include "ELFReloc.h"
+#include "ELFTypes.h"
+
+#include <set>
 
 template <unsigned Bitwidth>
 ELFSectionRelTable<Bitwidth>::~ELFSectionRelTable() {
@@ -79,6 +85,36 @@ ELFSectionRelTable<Bitwidth>::read(Archiver &AR,
   }
 
   return rt.take();
+}
+
+template <unsigned Bitwidth>
+size_t ELFSectionRelTable<Bitwidth>::
+getMaxNumStubs(ELFObjectTy const *obj) const {
+  switch (obj->getHeader()->getMachine()) {
+  case EM_ARM:
+    {
+      std::set<word_t> sym_index_set;
+
+      for (size_t i = 0; i < size(); ++i) {
+        ELFRelocTy *rel = table[i];
+
+        if (rel->getType() == R_ARM_CALL) {
+          sym_index_set.insert(rel->getSymTabIndex());
+        }
+      }
+
+      return sym_index_set.size();
+    }
+
+  case EM_386:
+  case EM_X86_64:
+  case EM_MIPS:
+    return 0;
+
+  default:
+    rsl_assert(0 && "Only support ARM, MIPS, X86, and X86_64 relocation.");
+    return 0;
+  }
 }
 
 #endif // ELF_SECTION_REL_TABLE_HXX

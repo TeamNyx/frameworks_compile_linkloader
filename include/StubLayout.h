@@ -17,12 +17,15 @@
 #ifndef STUB_LAYOUT_H
 #define STUB_LAYOUT_H
 
+#include <map>
 #include <stdlib.h>
 
 class StubLayout {
 private:
   unsigned char *table;
   size_t count;
+
+  std::map<void *, void *> stub_index;
 
 public:
   StubLayout();

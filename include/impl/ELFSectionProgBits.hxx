@@ -36,27 +36,33 @@ ELFSectionProgBits<Bitwidth>::read(Archiver &AR,
 
   llvm::OwningPtr<ELFSectionProgBits> result(new ELFSectionProgBits());
 
-  // TODO: Not every section needs a stub.
 #ifdef __arm__
-  // Count the extern function symbol
-  ELFSectionSymTabTy const *symtab =
-    static_cast<ELFSectionSymTabTy *>(owner->getSectionByName(".symtab"));
+  // Compute the maximal possible numbers of stubs
+  std::string reltab_name(".rel" + std::string(sh->getName()));
 
-  // TODO: May not call this function every progbits section.
-  size_t func_count = symtab->getExternFuncCount();
+  ELFSectionRelTableTy const *reltab =
+    static_cast<ELFSectionRelTableTy *>(
+      owner->getSectionByName(reltab_name.c_str()));
 
+  size_t max_num_stubs = 0;
+
+  if (reltab) {
+    // If we have relocation table, then get the approximation of maximum
+    // numbers of stubs.
+    max_num_stubs = reltab->getMaxNumStubs(owner);
+  }
+
+  // Compute the stub table size
   StubLayout *stubs = result->getStubLayout();
+  size_t stub_table_size = stubs->calcStubTableSize(max_num_stubs);
 
-  // TODO: May be too many stubs.
-  // Calculate additional stub size
-  size_t stub_size = stubs->calcStubTableSize(func_count);
-
-  // Allocate progbits section + stub
-  if (!result->chunk.allocate(sh->getSize() + stub_size)) {
+  // Allocate PROGBITS section with stubs table
+  size_t alloc_size = ((sh->getSize() + 3) / 4 * 4) + stub_table_size;
+  if (!result->chunk.allocate(alloc_size)) {
     return NULL;
   }
 
-  stubs->initStubTable(result->chunk.getBuffer()+sh->getSize(), func_count);
+  stubs->initStubTable(result->chunk.getBuffer()+sh->getSize(), max_num_stubs);
 #else
   // Allocate text section
   if (!result->chunk.allocate(sh->getSize())) {

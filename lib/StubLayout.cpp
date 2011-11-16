@@ -37,6 +37,14 @@ void StubLayout::initStubTable(unsigned char *table_, size_t count_) {
 
 void *StubLayout::allocateStub(void *addr) {
 #ifdef __arm__
+  // Check if we have created this stub or not.
+  std::map<void *, void *>::iterator index_iter = stub_index.find(addr);
+
+  if (index_iter != stub_index.end()) {
+    return index_iter->second;
+  }
+
+  // We have to create a new stub
   if (count == 0) {
     // No free stub slot is available
     return NULL;
@@ -45,6 +53,7 @@ void *StubLayout::allocateStub(void *addr) {
   // Initialize the stub
   unsigned char *stub = table;
   setStubAddress(stub, addr);
+  stub_index.insert(std::make_pair(addr, stub));
 
   // Increase the free stub slot pointer
   table += STUB_SIZE;

@@ -53,6 +53,8 @@ public:
   ELFRelocTy *operator[](size_t index) {
     return table[index];
   }
+
+  size_t getMaxNumStubs(ELFObjectTy const *) const;
 };
 
 #include "impl/ELFSectionRelTable.hxx"
