@@ -379,12 +379,16 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
 
     case R_MIPS_HI16:
       A = A & 0xFFFF;
-      *inst |= (((S + A + 0x8000) >> 16) & 0xFFFF);
+      // FIXME: We just support addend = 0.
+      rsl_assert(A == 0 && "R_MIPS_HI16 addend is not 0.");
+      *inst |= (((S + 0x8000) >> 16) & 0xFFFF);
       break;
 
     case R_MIPS_LO16:
       A = A & 0xFFFF;
-      *inst |= ((S + A) & 0xFFFF);
+      // FIXME: We just support addend = 0.
+      rsl_assert(A == 0 && "R_MIPS_LO16 addend is not 0.");
+      *inst |= (S & 0xFFFF);
       break;
 
     case R_MIPS_26:
