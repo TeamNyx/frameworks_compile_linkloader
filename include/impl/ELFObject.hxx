@@ -202,9 +202,9 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
         }
 
         //LOGI("Function %s: using stub %p\n", sym->getName(), stub);
-        S = (uint32_t)stub;
+        S = (uint32_t)(uintptr_t)stub;
 #else
-        S = (uint32_t)callee_addr;
+        S = (uint32_t)(uintptr_t)callee_addr;
 #endif
 
         // Relocate the R_ARM_CALL relocation type
