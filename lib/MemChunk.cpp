@@ -31,7 +31,7 @@
 // define it as zero, so that it won't manipulate the flags.
 #endif
 
-#define USE_FIXED_ADDR_MEM_CHUNK 1
+//#define USE_FIXED_ADDR_MEM_CHUNK 1
 
 #if USE_FIXED_ADDR_MEM_CHUNK
 static uintptr_t StartAddr = 0x7e000000UL;
