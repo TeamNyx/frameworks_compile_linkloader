@@ -18,6 +18,7 @@
 
 #include "utils/flush_cpu_cache.h"
 #include "utils/raw_ostream.h"
+#include "utils/rsl_assert.h"
 
 #include <stdint.h>
 #include <stdlib.h>
