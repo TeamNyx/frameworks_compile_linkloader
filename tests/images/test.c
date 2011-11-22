@@ -16,7 +16,7 @@
 
 #include<stdio.h>
 static void hello_function(const char *ptr){
-        printf(ptr);
+        printf("%s", ptr);
 }
 int my_add(int para_x, int para_y){
         return para_x + para_y;
