@@ -192,9 +192,15 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           break;
         }
 
-#if __arm__
         // Get the stub for this function
-        void *stub = text->getStubLayout()->allocateStub(callee_addr);
+        StubLayout *stub_layout = text->getStubLayout();
+
+        if (!stub_layout) {
+          llvm::errs() << "unable to get stub layout." << "\n";
+          abort();
+        }
+
+        void *stub = stub_layout->allocateStub(callee_addr);
 
         if (!stub) {
           llvm::errs() << "unable to allocate stub." << "\n";
@@ -203,9 +209,6 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
 
         //LOGI("Function %s: using stub %p\n", sym->getName(), stub);
         S = (uint32_t)(uintptr_t)stub;
-#else
-        S = (uint32_t)(uintptr_t)callee_addr;
-#endif
 
         // Relocate the R_ARM_CALL relocation type
         uint32_t result = (S >> 2) - (P >> 2) + A;

@@ -29,15 +29,36 @@ private:
 
 public:
   StubLayout();
+  virtual ~StubLayout() { }
 
   void initStubTable(unsigned char *table, size_t count);
   void *allocateStub(void *addr = 0);
 
   size_t calcStubTableSize(size_t count) const;
+  virtual size_t getUnitStubSize() const = 0;
 
 private:
-  void setStubAddress(void *stub, void *addr);
+  virtual void setStubAddress(void *stub, void *addr) = 0;
 
 };
+
+class StubLayoutARM : public StubLayout {
+public:
+  StubLayoutARM() { }
+  size_t getUnitStubSize() const;
+
+private:
+  virtual void setStubAddress(void *stub, void *addr);
+};
+
+class StubLayoutMIPS : public StubLayout {
+public:
+  StubLayoutMIPS() { }
+  size_t getUnitStubSize() const;
+
+private:
+  virtual void setStubAddress(void *stub, void *addr);
+};
+
 
 #endif // STUB_LAYOUT_H

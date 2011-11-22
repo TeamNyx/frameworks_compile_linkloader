@@ -24,12 +24,6 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
-#if defined(__arm__)
-#define STUB_SIZE 8
-#elif defined(__mips__)
-#define STUB_SIZE 16
-#endif
-
 StubLayout::StubLayout() : table(NULL), count(0) {
 }
 
@@ -39,7 +33,6 @@ void StubLayout::initStubTable(unsigned char *table_, size_t count_) {
 }
 
 void *StubLayout::allocateStub(void *addr) {
-#if defined(__arm__) || defined(__mips__)
   // Check if we have created this stub or not.
   std::map<void *, void *>::iterator index_iter = stub_index.find(addr);
 
@@ -59,18 +52,21 @@ void *StubLayout::allocateStub(void *addr) {
   stub_index.insert(std::make_pair(addr, stub));
 
   // Increase the free stub slot pointer
-  table += STUB_SIZE;
+  table += getUnitStubSize();
   count--;
 
   return stub;
-
-#else
-  return NULL;
-#endif
 }
 
-void StubLayout::setStubAddress(void *stub_, void *addr) {
-#if defined(__arm__)
+size_t StubLayout::calcStubTableSize(size_t count) const {
+  return count * getUnitStubSize();
+}
+
+size_t StubLayoutARM::getUnitStubSize() const {
+  return 8; 
+}
+
+void StubLayoutARM::setStubAddress(void *stub_, void *addr) {
   uint8_t *stub = (uint8_t *)stub_;
   stub[0] = 0x04; // ldr pc, [pc, #-4]
   stub[1] = 0xf0; // ldr pc, [pc, #-4]
@@ -79,8 +75,13 @@ void StubLayout::setStubAddress(void *stub_, void *addr) {
 
   void **target = (void **)(stub + 4);
   *target = addr;
+}
 
-#elif defined(__mips__)
+size_t StubLayoutMIPS::getUnitStubSize() const {
+  return 16; 
+}
+
+void StubLayoutMIPS::setStubAddress(void *stub_, void *addr) {
   uint32_t addr32 = (uint32_t)(uintptr_t)addr;
   uint16_t addr_hi16 = (addr32 >> 16) &  0xffff;
   uint16_t addr_lo16 = addr32 & 0xffff;
@@ -90,16 +91,5 @@ void StubLayout::setStubAddress(void *stub_, void *addr) {
   stub[1] = 0x37390000ul | addr_lo16; // ori
   stub[2] = 0x03200008ul; // jr (jump register)
   stub[3] = 0x00000000ul; // nop
-
-#else
-  rsl_assert(0 && "Stub is not supported on this platform");
-#endif
 }
 
-size_t StubLayout::calcStubTableSize(size_t count) const {
-#if defined(__arm__) || defined(__mips__)
-  return count * STUB_SIZE;
-#else
-  return 0;
-#endif
-}

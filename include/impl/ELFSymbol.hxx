@@ -29,10 +29,8 @@
 #include "utils/rsl_assert.h"
 #include "ELF.h"
 
-#ifdef __arm__
 #define LOG_TAG "bcc"
 #include "cutils/log.h"
-#endif
 
 template <unsigned Bitwidth>
 inline char const *ELFSymbol_CRTP<Bitwidth>::getName() const {
@@ -170,7 +168,6 @@ void *ELFSymbol_CRTP<Bitwidth>::getAddress(bool autoAlloc) const {
             }
 
 #if 0
-#ifdef __arm__
             LOGD("Symbol %s\n", getName());
             if (strcmp(getName(), "camera") == 0) {
               uint32_t *p = (uint32_t *)(&st[0] + (size_t)getValue());
@@ -179,7 +176,6 @@ void *ELFSymbol_CRTP<Bitwidth>::getAddress(bool autoAlloc) const {
               LOGD("     | %08x %08x %08x %08x\n", p[8], p[9], p[10], p[11]);
               LOGD("     | %08x %08x %08x %08x\n", p[12], p[13], p[14], p[15]);
             }
-#endif
 #endif
           }
           break;

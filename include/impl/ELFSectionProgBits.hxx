@@ -33,42 +33,41 @@ ELFSectionProgBits<Bitwidth> *
 ELFSectionProgBits<Bitwidth>::read(Archiver &AR,
                                    ELFObjectTy *owner,
                                    ELFSectionHeaderTy const *sh) {
-
-  llvm::OwningPtr<ELFSectionProgBits> result(new ELFSectionProgBits());
-
-#ifdef __arm__
-  // Compute the maximal possible numbers of stubs
-  std::string reltab_name(".rel" + std::string(sh->getName()));
-
-  ELFSectionRelTableTy const *reltab =
-    static_cast<ELFSectionRelTableTy *>(
-      owner->getSectionByName(reltab_name.c_str()));
-
+  int machine = owner->getHeader()->getMachine();
+  ELFSectionProgBits *secp = new ELFSectionProgBits(machine);
+  llvm::OwningPtr<ELFSectionProgBits> result(secp);
   size_t max_num_stubs = 0;
+  size_t alloc_size = (sh->getSize() + 3) / 4 * 4;
+  StubLayout *stubs = result->getStubLayout();
+  if (stubs) {
+    // Compute the maximal possible numbers of stubs
+    std::string reltab_name(".rel" + std::string(sh->getName()));
 
-  if (reltab) {
-    // If we have relocation table, then get the approximation of maximum
-    // numbers of stubs.
-    max_num_stubs = reltab->getMaxNumStubs(owner);
+    ELFSectionRelTableTy const *reltab =
+      static_cast<ELFSectionRelTableTy *>(
+        owner->getSectionByName(reltab_name.c_str()));
+
+    if (reltab) {
+      // If we have relocation table, then get the approximation of
+      // maximum numbers of stubs.
+      max_num_stubs = reltab->getMaxNumStubs(owner);
+    }
+
+    // Compute the stub table size
+    size_t stub_table_size = stubs->calcStubTableSize(max_num_stubs);
+
+    // Allocate PROGBITS section with stubs table
+    alloc_size += stub_table_size;
   }
 
-  // Compute the stub table size
-  StubLayout *stubs = result->getStubLayout();
-  size_t stub_table_size = stubs->calcStubTableSize(max_num_stubs);
-
-  // Allocate PROGBITS section with stubs table
-  size_t alloc_size = ((sh->getSize() + 3) / 4 * 4) + stub_table_size;
+  // Allocate text section
   if (!result->chunk.allocate(alloc_size)) {
     return NULL;
   }
 
-  stubs->initStubTable(result->chunk.getBuffer()+sh->getSize(), max_num_stubs);
-#else
-  // Allocate text section
-  if (!result->chunk.allocate(sh->getSize())) {
-    return NULL;
+  if (stubs) {
+    stubs->initStubTable(result->chunk.getBuffer()+sh->getSize(), max_num_stubs);
   }
-#endif
 
   result->sh = sh;
 
