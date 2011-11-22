@@ -26,9 +26,9 @@ clang -emit-llvm -std=c89 -Wall -c rodata-test.c -o rodata-test.bc
 
 function gen_test_cases {
   echo -e "${CYAN}Generating for $1 ...${RESET}"
-  llc -filetype=obj -mtriple $2 $3 test.bc -o test-$1.o
-  llc -filetype=obj -mtriple $2 $3 simple-test.bc -o simple-test-$1.o
-  llc -filetype=obj -mtriple $2 $3 rodata-test.bc -o rodata-test-$1.o
+  llc -filetype=obj -relocation-model=static -mtriple $2 $3 test.bc -o test-$1.o
+  llc -filetype=obj -relocation-model=static -mtriple $2 $3 simple-test.bc -o simple-test-$1.o
+  llc -filetype=obj -relocation-model=static -mtriple $2 $3 rodata-test.bc -o rodata-test-$1.o
 }
 
 gen_test_cases arm    armv7-none-linux-gnueabi
