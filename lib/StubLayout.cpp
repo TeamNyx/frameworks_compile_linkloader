@@ -63,7 +63,7 @@ size_t StubLayout::calcStubTableSize(size_t count) const {
 }
 
 size_t StubLayoutARM::getUnitStubSize() const {
-  return 8; 
+  return 8;
 }
 
 void StubLayoutARM::setStubAddress(void *stub_, void *addr) {
@@ -78,7 +78,7 @@ void StubLayoutARM::setStubAddress(void *stub_, void *addr) {
 }
 
 size_t StubLayoutMIPS::getUnitStubSize() const {
-  return 16; 
+  return 16;
 }
 
 void StubLayoutMIPS::setStubAddress(void *stub_, void *addr) {
@@ -92,4 +92,3 @@ void StubLayoutMIPS::setStubAddress(void *stub_, void *addr) {
   stub[2] = 0x03200008ul; // jr (jump register)
   stub[3] = 0x00000000ul; // nop
 }
-
