@@ -20,16 +20,10 @@
 #include "utils/rsl_assert.h"
 #include "ELF.h"
 
-#if defined(mips) || defined(__mips__) || defined(MIPS) || defined(_MIPS_)
 #define GP_OFFSET	((int)0x8000)
 #define GOT_SIZE	(1 << 16)	// bytes
 #define GOT_ENTRY_SIZE	4	// bytes
 #define NUM_OF_GOT_ENTRY	(GOT_SIZE/GOT_ENTRY_SIZE)
-#else
-#define GOT_SIZE	4	// bytes
-#define GOT_ENTRY_SIZE	4	// bytes
-#define NUM_OF_GOT_ENTRY	(GOT_SIZE/GOT_ENTRY_SIZE)
-#endif
 
 void *got_address();
 int search_got(int symbol_index, void *addr, uint8_t bind_type);

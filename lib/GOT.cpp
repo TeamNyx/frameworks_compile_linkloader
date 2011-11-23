@@ -26,8 +26,6 @@ void *got_address()
   return &got_symbol_addresses[0];
 }
 
-#if defined(mips) || defined(__mips__) || defined(MIPS) || defined(_MIPS_)
-
 int search_got(int symbol_index, void *addr, uint8_t bind_type)
 {
   size_t i;
@@ -63,12 +61,3 @@ int search_got(int symbol_index, void *addr, uint8_t bind_type)
   got_symbol_count++;
   return (got_symbol_count - 1);
 }
-
-#else
-
-int search_got(int symbol_index, void *addr, uint8_t bind_type)
-{
-  return 0;
-}
-
-#endif
