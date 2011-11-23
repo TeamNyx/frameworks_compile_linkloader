@@ -93,7 +93,7 @@ getMaxNumStubs(ELFObjectTy const *obj) const {
   switch (obj->getHeader()->getMachine()) {
   case EM_ARM:
     {
-      std::set<word_t> sym_index_set;
+      std::set<uint32_t> sym_index_set;
 
       for (size_t i = 0; i < size(); ++i) {
         ELFRelocTy *rel = table[i];
@@ -106,9 +106,23 @@ getMaxNumStubs(ELFObjectTy const *obj) const {
       return sym_index_set.size();
     }
 
+  case EM_MIPS:
+    {
+      std::set<uint32_t> sym_index_set;
+
+      for (size_t i = 0; i < size(); ++i) {
+        ELFRelocTy *rel = table[i];
+
+        if (rel->getType() == R_MIPS_26) {
+          sym_index_set.insert(rel->getSymTabIndex());
+        }
+      }
+
+      return sym_index_set.size();
+    }
+
   case EM_386:
   case EM_X86_64:
-  case EM_MIPS:
     return 0;
 
   default:

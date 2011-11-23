@@ -35,6 +35,7 @@ LOCAL_SRC_FILES := \
   lib/ELFTypes.cpp \
   lib/MemChunk.cpp \
   lib/StubLayout.cpp \
+  lib/GOT.cpp \
   utils/raw_ostream.cpp \
   utils/rsl_assert.cpp \
   utils/helper.cpp \
