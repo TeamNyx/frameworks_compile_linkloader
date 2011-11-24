@@ -438,12 +438,24 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
 
     case R_MIPS_HI16:
       *inst &= 0xFFFF0000;
-      A = A & 0xFFFF;
+      A = (A & 0xFFFF) << 16;
+      // Find the nearest LO16 relocation type after this entry
+      for (size_t j = i + 1; j < reltab->size(); j++) {
+        ELFRelocTy *this_rel = (*reltab)[j];
+        ELFSymbolTy *this_sym = (*symtab)[this_rel->getSymTabIndex()];
+        if (this_rel->getType() == R_MIPS_LO16 && this_sym == sym) {
+          Inst_t *this_inst = (Inst_t *)&(*text)[this_rel->getOffset()];
+          Inst_t this_A = (Inst_t)(uintptr_t)*this_inst;
+          this_A = this_A & 0xFFFF;
+          A += (short)this_A;
+          break;
+        }
+      }
       if (strcmp (sym->getName(), "_gp_disp") == 0) {
           S = (int)got_address() + GP_OFFSET - (int)P;
           sym->setAddress((void *)S);
       }
-      *inst |= (((S + (A << 16) + (int)0x8000) >> 16) & 0xFFFF);
+      *inst |= (((S + A + (int)0x8000) >> 16) & 0xFFFF);
       break;
 
     case R_MIPS_LO16:
@@ -453,10 +465,6 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
           S = (Inst_t)sym->getAddress();
       }
       *inst |= ((S + A) & 0xFFFF);
-      // We assume the addend of R_MIPS_LO16 won't affect R_MIPS_HI16.
-      // If not, we have troubles.
-      if (((S + (short)A + (int)0x8000) >> 16) != ((S + (int)0x8000) >> 16))
-        rsl_assert("AHL cannot be calculated correctly.");
       break;
 
     case R_MIPS_GOT16:
@@ -464,9 +472,31 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
       {
         *inst &= 0xFFFF0000;
         A = A & 0xFFFF;
-        // FIXME: We just support addend = 0.
-        rsl_assert(A == 0 && "R_MIPS_GOT16/R_MIPS_CALL16 addend is not 0.");
-        int got_index = search_got((int)rel->getSymTabIndex(), (void *)S,
+        if (rel->getType() == R_MIPS_GOT16) {
+          if (sym->getBindingAttribute() == STB_LOCAL) {
+            A <<= 16;
+
+            // Find the nearest LO16 relocation type after this entry
+            for (size_t j = i + 1; j < reltab->size(); j++) {
+              ELFRelocTy *this_rel = (*reltab)[j];
+              ELFSymbolTy *this_sym = (*symtab)[this_rel->getSymTabIndex()];
+              if (this_rel->getType() == R_MIPS_LO16 && this_sym == sym) {
+                Inst_t *this_inst = (Inst_t *)&(*text)[this_rel->getOffset()];
+                Inst_t this_A = (Inst_t)(uintptr_t)*this_inst;
+                this_A = this_A & 0xFFFF;
+                A += (short)this_A;
+                break;
+              }
+            }
+          }
+          else {
+            rsl_assert(A == 0 && "R_MIPS_GOT16 addend is not 0.");
+          }
+        }
+        else { // R_MIPS_CALL16
+          rsl_assert(A == 0 && "R_MIPS_CALL16 addend is not 0.");
+        }
+        int got_index = search_got((int)rel->getSymTabIndex(), (void *)(S + A),
                                    sym->getBindingAttribute());
         int got_offset = (got_index << 2) - GP_OFFSET;
         *inst |= (got_offset & 0xFFFF);
