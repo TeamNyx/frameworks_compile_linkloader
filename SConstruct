@@ -35,10 +35,23 @@ toolsets = {
         'CXX': 'g++',
     },
 
+    'mips-gcc': {
+        'CC': 'mips-linux-gnu-gcc',
+        'CXX': 'mips-linux-gnu-g++',
+    },
+
     'clang': {
         'CC': 'clang',
         'CXX': 'clang++',
     },
+}
+
+toolset_configs = {
+    'gcc': { 'CFLAGS': [], 'CXXFLAGS': [], 'LDFLAGS': [] },
+    'clang': { 'CFLAGS': [], 'CXXFLAGS': [], 'LDFLAGS': [] },
+    'mips-gcc': { 'CFLAGS': ['-EL', '-mips32r2'],
+                  'CXXFLAGS': ['-EL', '-mips32r2'],
+                  'LDFLAGS': ['-EL', '-mips32r2'] }
 }
 
 mode = ARGUMENTS.get('mode', 'release')
@@ -54,19 +67,25 @@ if not toolset in toolsets:
 
 build_config = configs[mode]
 build_toolset = toolsets[toolset]
+build_toolset_config = toolset_configs[toolset]
 
 print '===> BUILDING IN', mode.upper(), 'MODE ...'
 
 import os
 
+cflags = build_config['CFLAGS'] + build_toolset_config['CFLAGS']
+cxxflags = build_config['CXXFLAGS'] + build_toolset_config['CXXFLAGS']
+linkflags = build_toolset_config['LDFLAGS']
+
 env = Environment(CC=build_toolset['CC'],
                   CXX=build_toolset['CXX'],
-                  CFLAGS=build_config['CFLAGS'],
-                  CXXFLAGS=build_config['CXXFLAGS'],
+                  CFLAGS=cflags,
+                  CXXFLAGS=cxxflags,
+                  LINKFLAGS=linkflags,
                   CPPPATH=['.', 'include'],
                   ENV={'PATH': os.environ['PATH']})
 
-env.ParseConfig('llvm-config --cxxflags --ldflags --libs support')
+env.ParseConfig('llvm-config-2 --cxxflags --ldflags --libs support')
 
 env.Program('rsloader',
             source=['lib/ELFHeader.cpp',
