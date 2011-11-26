@@ -17,7 +17,7 @@
 #ifndef FLUSH_CPU_CACHE_H
 #define FLUSH_CPU_CACHE_H
 
-#ifdef __arm__
+#if defined(__arm__) || defined(__mips__)
 
 // Note: Though we wish to use the gcc builtin function __clear_cache to
 // invalidate the instruction cache; however, the toolchain of Android
@@ -32,11 +32,16 @@
 #define FLUSH_CPU_CACHE(BEGIN, END) \
   cacheflush(((long)(BEGIN)), ((long)(END)), 0)
 
-#elif defined(mips) || defined(__mips__) || defined(MIPS) || defined(_MIPS_)
+#if 0 && defined(__mips__)
+
+// Note: Following code does not work with Android Toolchain, though they
+// works while using standalone mips-linux-gnu-gcc.
 
 #include <sys/cachectl.h>
 #define FLUSH_CPU_CACHE(BEGIN, END) \
   _flush_cache(reinterpret_cast<char*>(BEGIN), END-BEGIN+1, BCACHE);
+
+#endif
 
 #else
 
