@@ -73,7 +73,7 @@ extern "C" void *rsloaderGetSymbolAddress(RSExecRef object_,
   ELFSymbol<32> *symbol = symtab->getByName(name);
 
   if (!symbol) {
-    LOGE("Symbol not found: %s\n", name);
+    ALOGV("Symbol not found: %s\n", name);
     return NULL;
   }
 
@@ -93,7 +93,7 @@ extern "C" size_t rsloaderGetSymbolSize(RSExecRef object_, char const *name) {
   ELFSymbol<32> *symbol = symtab->getByName(name);
 
   if (!symbol) {
-    LOGE("Symbol not found: %s\n", name);
+    ALOGV("Symbol not found: %s\n", name);
     return NULL;
   }
 
