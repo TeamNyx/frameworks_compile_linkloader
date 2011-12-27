@@ -17,21 +17,4 @@ using namespace llvm::ELF;
 #define ET_HIOS 0xfeff
 #endif
 
-#ifndef STT_LOOS
-#define STT_LOOS 10
-#endif
-
-#ifndef STT_HIOS
-#define STT_HIOS 12
-#endif
-
-#ifndef STB_LOOS
-#define STB_LOOS 10
-#endif
-
-#ifndef STB_HIOS
-#define STB_HIOS 12
-#endif
-
-
 #endif // ELF_H
