@@ -124,7 +124,7 @@ LOCAL_MODULE := test-librsloader
 
 LOCAL_MODULE_TAGS := tests
 
-LOCAL_LDFLAGS := \
+LOCAL_LDLIBS := \
   -lpthread \
   -ldl
 
