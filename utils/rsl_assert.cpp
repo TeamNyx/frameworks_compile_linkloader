@@ -33,9 +33,9 @@ extern "C" void ASSERT_FAILED(char const *file,
   llvm::errs() << "rslAssert [" << file << ":" << line << "] " << expr << "\n";
   llvm::errs() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
 #else
-  LOGE("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-  LOGE("rslAssert [%s:%d] %s\n", file, line, expr);
-  LOGE("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  ALOGE("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  ALOGE("rslAssert [%s:%d] %s\n", file, line, expr);
+  ALOGE("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 #endif
 
   abort();

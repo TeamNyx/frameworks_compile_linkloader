@@ -45,7 +45,7 @@ rsloaderCreateExec(unsigned char const *buf,
 
   llvm::OwningPtr<ELFObject<32> > object(ELFObject<32>::read(AR));
   if (!object) {
-    LOGE("Unable to load the ELF object.");
+    ALOGE("Unable to load the ELF object.");
     return NULL;
   }
 
