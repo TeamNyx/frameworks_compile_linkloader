@@ -142,7 +142,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
     Inst_t *inst = (Inst_t *)&(*text)[rel->getOffset()];
     Inst_t P = (Inst_t)(int64_t)inst;
     Inst_t A = 0;
-    Inst_t S = (Inst_t)(int64_t)sym->getAddress();
+    Inst_t S = (Inst_t)(int64_t)sym->getAddress(EM_ARM);
 
     switch (rel->getType()) {
     default:
@@ -163,7 +163,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
         A = (Inst_t)(int64_t)SIGN_EXTEND(*inst & 0xFFFFFF, 24);
 #undef SIGN_EXTEND
 
-        void *callee_addr = sym->getAddress();
+        void *callee_addr = sym->getAddress(EM_ARM);
 
         switch (sym->getType()) {
         default:
@@ -177,7 +177,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
 
           if (callee_addr == 0) {
             rsl_assert(0 && "We should get function address at previous "
-                   "sym->getAddress() function call.");
+                   "sym->getAddress(EM_ARM) function call.");
             abort();
           }
           break;
@@ -274,7 +274,7 @@ relocateX86_64(void *(*find_sym)(void *context, char const *name),
     Inst_t *inst = (Inst_t *)&(*text)[rel->getOffset()];
     Inst_t P = (Inst_t)(int64_t)inst;
     Inst_t A = (Inst_t)(int64_t)rel->getAddend();
-    Inst_t S = (Inst_t)(int64_t)sym->getAddress();
+    Inst_t S = (Inst_t)(int64_t)sym->getAddress(EM_X86_64);
 
     if (S == 0) {
       S = (Inst_t)(int64_t)find_sym(context, sym->getName());
@@ -325,7 +325,7 @@ relocateX86_32(void *(*find_sym)(void *context, char const *name),
     Inst_t *inst = (Inst_t *)&(*text)[rel->getOffset()];
     Inst_t P = (Inst_t)(uintptr_t)inst;
     Inst_t A = (Inst_t)(uintptr_t)*inst;
-    Inst_t S = (Inst_t)(uintptr_t)sym->getAddress();
+    Inst_t S = (Inst_t)(uintptr_t)sym->getAddress(EM_386);
 
     if (S == 0) {
       S = (Inst_t)(uintptr_t)find_sym(context, sym->getName());
@@ -369,7 +369,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
     Inst_t *inst = (Inst_t *)&(*text)[rel->getOffset()];
     Inst_t P = (Inst_t)(uintptr_t)inst;
     Inst_t A = (Inst_t)(uintptr_t)*inst;
-    Inst_t S = (Inst_t)(uintptr_t)sym->getAddress();
+    Inst_t S = (Inst_t)(uintptr_t)sym->getAddress(EM_MIPS);
 
     bool need_stub = false;
 
@@ -462,7 +462,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
       *inst &= 0xFFFF0000;
       A = A & 0xFFFF;
       if (strcmp (sym->getName(), "_gp_disp") == 0) {
-          S = (Inst_t)sym->getAddress();
+          S = (Inst_t)sym->getAddress(EM_MIPS);
       }
       *inst |= ((S + A) & 0xFFFF);
       break;

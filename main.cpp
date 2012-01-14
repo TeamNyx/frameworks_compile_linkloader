@@ -159,7 +159,9 @@ void dump_and_run_object(Archiver &AR, int argc, char **argv) {
   out() << "relocate finished!\n";
   out().flush();
 
-  void *main_addr = symtab->getByName("main")->getAddress();
+  int machine = object->getHeader()->getMachine();
+
+  void *main_addr = symtab->getByName("main")->getAddress(machine);
   out() << "main address: " << main_addr << "\n";
   out().flush();
 

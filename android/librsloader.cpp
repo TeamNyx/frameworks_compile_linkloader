@@ -77,7 +77,9 @@ extern "C" void *rsloaderGetSymbolAddress(RSExecRef object_,
     return NULL;
   }
 
-  return symbol->getAddress(false);
+  int machine = object->getHeader()->getMachine();
+
+  return symbol->getAddress(machine, false);
 }
 
 extern "C" size_t rsloaderGetSymbolSize(RSExecRef object_, char const *name) {

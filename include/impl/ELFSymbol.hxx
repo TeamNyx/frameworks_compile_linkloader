@@ -119,7 +119,7 @@ inline void ELFSymbol_CRTP<Bitwidth>::print(bool shouldPrintHeader) const {
 }
 
 template <unsigned Bitwidth>
-void *ELFSymbol_CRTP<Bitwidth>::getAddress(bool autoAlloc) const {
+void *ELFSymbol_CRTP<Bitwidth>::getAddress(int machine, bool autoAlloc) const {
   if (my_addr != 0) {
     return my_addr;
   }
@@ -200,10 +200,9 @@ void *ELFSymbol_CRTP<Bitwidth>::getAddress(bool autoAlloc) const {
           break;
 
         case SHN_UNDEF:
-#if defined(mips) || defined(__mips__) || defined(MIPS) || defined(_MIPS_)
-          if (strcmp(getName(), "_gp_disp") == 0) // OK for MIPS
+          if (machine == EM_MIPS && strcmp(getName(), "_gp_disp") == 0) // OK for MIPS
             break;
-#endif
+
         case SHN_ABS:
         case SHN_XINDEX:
           rsl_assert(0 && "STT_OBJECT with special st_shndx.");
