@@ -2,12 +2,11 @@
 #define ELF_H
 
 #include <llvm/Support/ELF.h>
-// FIXME: XXX: Can't using namespace in header file!
+// FIXME: Can't using namespace in header file!
 using namespace llvm::ELF;
 
-// TODO: These definitions are not defined in include/llvm/Support/ELF.h
-// elf.h.  So we to this by ourself.  Maybe we should update ELF.h
-// instead.
+// These definitions are not defined in include/llvm/Support/ELF.h.
+// So we define them here.
 
 #ifndef ET_LOOS
 #define ET_LOOS 0xfe00
