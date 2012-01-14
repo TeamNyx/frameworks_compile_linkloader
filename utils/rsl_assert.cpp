@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 
-#ifdef __arm__
+#if !defined(__HOST__)
 #define LOG_TAG "bcc"
 #include <cutils/log.h>
 #endif
@@ -28,7 +28,7 @@
 extern "C" void ASSERT_FAILED(char const *file,
                               unsigned line,
                               char const *expr) {
-#ifndef __arm__
+#if defined(__HOST__)
   llvm::errs() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
   llvm::errs() << "rslAssert [" << file << ":" << line << "] " << expr << "\n";
   llvm::errs() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";

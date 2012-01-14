@@ -85,6 +85,8 @@ ifeq (darwin,$(BUILD_OS))
 LOCAL_CFLAGS += -DMACOSX
 endif
 
+LOCAL_CFLAGS += -D__HOST__
+
 include $(LLVM_ROOT_PATH)/llvm-host-build.mk
 include $(BUILD_HOST_STATIC_LIBRARY)
 
