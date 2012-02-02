@@ -41,6 +41,8 @@ private:
   unsigned char *SHNCommonDataPtr;
   size_t SHNCommonDataFreeSize;
 
+  bool missingSymbols;
+
   // TODO: Need refactor!
   bool initSHNCommonDataSize(size_t SHNCommonDataSize) {
     rsl_assert(!SHNCommonDataPtr && "Can't init twice.");
@@ -54,7 +56,7 @@ private:
   }
 
 private:
-  ELFObject() : SHNCommonDataPtr(NULL) { }
+  ELFObject() : SHNCommonDataPtr(NULL), missingSymbols(false) { }
 
 public:
   template <typename Archiver>
@@ -73,6 +75,10 @@ public:
   ELFSectionTy *getSectionByIndex(size_t i);
   ELFSectionTy const *getSectionByName(std::string const &str) const;
   ELFSectionTy *getSectionByName(std::string const &str);
+
+  inline bool getMissingSymbols() const {
+    return missingSymbols;
+  }
 
   void *allocateSHNCommonData(size_t size, size_t align = 1) {
     rsl_assert(size > 0 && align != 0);

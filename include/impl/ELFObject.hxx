@@ -188,6 +188,9 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
 
           if (callee_addr == 0) {
             callee_addr = find_sym(context, sym->getName());
+            if (!callee_addr) {
+              missingSymbols = true;
+            }
             sym->setAddress(callee_addr);
           }
           break;
@@ -228,6 +231,9 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
         if (S==0 && sym->getType() == STT_NOTYPE)
         {
           void *ext_sym = find_sym(context, sym->getName());
+          if (!ext_sym) {
+            missingSymbols = true;
+          }
           S = (Inst_t)(uintptr_t)ext_sym;
           sym->setAddress(ext_sym);
         }
@@ -278,6 +284,9 @@ relocateX86_64(void *(*find_sym)(void *context, char const *name),
 
     if (S == 0) {
       S = (Inst_t)(int64_t)find_sym(context, sym->getName());
+      if (!S) {
+        missingSymbols = true;
+      }
       sym->setAddress((void *)S);
     }
 
@@ -329,6 +338,9 @@ relocateX86_32(void *(*find_sym)(void *context, char const *name),
 
     if (S == 0) {
       S = (Inst_t)(uintptr_t)find_sym(context, sym->getName());
+      if (!S) {
+        missingSymbols = true;
+      }
       sym->setAddress((void *)S);
     }
 
@@ -376,6 +388,9 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
     if (S == 0 && strcmp (sym->getName(), "_gp_disp") != 0) {
       need_stub = true;
       S = (Inst_t)(uintptr_t)find_sym(context, sym->getName());
+      if (!S) {
+        missingSymbols = true;
+      }
       sym->setAddress((void *)S);
     }
 

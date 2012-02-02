@@ -51,6 +51,9 @@ rsloaderCreateExec(unsigned char const *buf,
 
   //object->print();
   object->relocate(find_symbol, find_symbol_context);
+  if (object->getMissingSymbols()) {
+    return NULL;
+  }
 
   return wrap(object.take());
 }
