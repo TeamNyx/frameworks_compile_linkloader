@@ -433,7 +433,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
             void *stub = text->getStubLayout()->allocateStub((void *)A);
             rsl_assert(stub && "cannot allocate stub.");
             sym->setAddress(stub);
-            S = (int32_t)stub;
+            S = (int32_t)(intptr_t)stub;
             *inst |= ((S >> 2) & 0x3FFFFFF);
             rsl_assert(((P + 4) >> 28) == (S >> 28) && "stub is too far.");
           }
@@ -445,7 +445,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
         void *stub = text->getStubLayout()->allocateStub((void *)S);
         rsl_assert(stub && "cannot allocate stub.");
         sym->setAddress(stub);
-        S = (int32_t)stub;
+        S = (int32_t)(intptr_t)stub;
         *inst |= ((S >> 2) & 0x3FFFFFF);
         rsl_assert(((P + 4) >> 28) == (S >> 28) && "stub is too far.");
       }
@@ -467,7 +467,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
         }
       }
       if (strcmp (sym->getName(), "_gp_disp") == 0) {
-          S = (int)got_address() + GP_OFFSET - (int)P;
+          S = (int)(intptr_t)got_address() + GP_OFFSET - (int)P;
           sym->setAddress((void *)S);
       }
       *inst |= (((S + A + (int)0x8000) >> 16) & 0xFFFF);
@@ -477,7 +477,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
       *inst &= 0xFFFF0000;
       A = A & 0xFFFF;
       if (strcmp (sym->getName(), "_gp_disp") == 0) {
-          S = (Inst_t)sym->getAddress(EM_MIPS);
+          S = (Inst_t)(intptr_t)sym->getAddress(EM_MIPS);
       }
       *inst |= ((S + A) & 0xFFFF);
       break;
@@ -519,7 +519,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
       break;
 
     case R_MIPS_GPREL32:
-      *inst = A + S - ((int)got_address() + GP_OFFSET);
+      *inst = A + S - ((int)(intptr_t)got_address() + GP_OFFSET);
       break;
     }
   }
