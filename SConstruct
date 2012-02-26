@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-COMMON_CFLAGS = ['-Wall', '-Werror']
-COMMON_CXXFLAGS = ['-Wall', '-Werror', '-fno-exceptions']
+COMMON_CFLAGS = ['-Wall', '-Werror', '-D__HOST__']
+COMMON_CXXFLAGS = ['-Wall', '-Werror', '-fno-exceptions', '-D__HOST__']
 
 configs = {
     'debug': {
@@ -85,7 +85,7 @@ env = Environment(CC=build_toolset['CC'],
                   CPPPATH=['.', 'include'],
                   ENV={'PATH': os.environ['PATH']})
 
-env.ParseConfig('llvm-config-2 --cxxflags --ldflags --libs support')
+env.ParseConfig('llvm-config --cxxflags --ldflags --libs support')
 
 env.Program('rsloader',
             source=['lib/ELFHeader.cpp',
