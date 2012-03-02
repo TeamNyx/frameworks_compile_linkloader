@@ -250,6 +250,8 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           *inst = ((result) & 0x00FFFFFF) | (*inst & 0xFF000000);
         }
         else {
+          P &= ~0x3;  // Base address align to 4 bytes.(For BLX.)
+
           // Relocate the R_ARM_THM_CALL relocation type
           uint32_t result = (S + A - P) >> 1;
 
@@ -258,7 +260,8 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
             abort();
           }
 
-          // Rewrite instruction to BLX.
+          //*inst &= 0xF800D000u;
+          // Rewrite instruction to BLX.(Stub is always ARM.)
           *inst &= 0xF800C000u;
           // [31-25][24][23][22][21-12][11-1][0]
           //      0   s  i1  i2      u     l  0

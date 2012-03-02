@@ -33,6 +33,7 @@ function gen_test_cases {
 
 gen_test_cases arm    armv7-none-linux-gnueabi
 gen_test_cases tegra2 armv7-none-linux-gnueabi '-mcpu=cortex-a9 -mattr=+vfp3'
+gen_test_cases thumb2 armv7-none-linux-gnueabi '-march=thumb -mattr=+thumb2'
 gen_test_cases x86_32 i686-none-linux
 gen_test_cases x86_64 x86_64-none-linux
 gen_test_cases mipsel mipsel-none-linux-gnueabi
