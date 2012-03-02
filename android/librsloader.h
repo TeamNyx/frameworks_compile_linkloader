@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, The Android Open Source Project
+ * Copyright 2011-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ RSExecRef rsloaderCreateExec(unsigned char const *buf,
                              size_t buf_size,
                              void *(*find_symbol)(void *, char const *),
                              void *find_symbol_context);
+
+void rsloaderUpdateSectionHeaders(RSExecRef object, unsigned char *buf);
 
 void rsloaderDisposeExec(RSExecRef object);
 
