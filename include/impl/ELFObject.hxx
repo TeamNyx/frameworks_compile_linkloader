@@ -154,12 +154,6 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
       rsl_assert(0 && "Not implemented relocation type.");
       break;
 
-    // Unknown to me.
-    case R_ARM_NONE:
-      {
-        *inst = S|T;
-      }
-
     case R_ARM_ABS32:
       {
         A = *inst;
