@@ -143,24 +143,54 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
     Inst_t P = (Inst_t)(int64_t)inst;
     Inst_t A = 0;
     Inst_t S = (Inst_t)(int64_t)sym->getAddress(EM_ARM);
+    Inst_t T = 0;
+
+    if (sym->isConcreteFunc() && (sym->getValue() & 0x1)) {
+      T = 1;
+    }
 
     switch (rel->getType()) {
     default:
       rsl_assert(0 && "Not implemented relocation type.");
       break;
 
+    // Unknown to me.
+    case R_ARM_NONE:
+      {
+        *inst = S|T;
+      }
+
     case R_ARM_ABS32:
       {
         A = *inst;
-        *inst = (S+A);
+        *inst = (S + A) | T;
       }
       break;
 
       // FIXME: Predefine relocation codes.
     case R_ARM_CALL:
+    case R_ARM_THM_CALL:
       {
 #define SIGN_EXTEND(x, l) (((x)^(1<<((l)-1)))-(1<<(l-1)))
-        A = (Inst_t)(int64_t)SIGN_EXTEND(*inst & 0xFFFFFF, 24);
+        if (rel->getType() == R_ARM_CALL) {
+          A = (Inst_t)(int64_t)SIGN_EXTEND(*inst & 0xFFFFFF, 24);
+          A <<= 2;
+        }
+        else {
+          // Hack for two 16bit.
+          *inst = ((*inst >> 16) & 0xFFFF) | (*inst << 16);
+          Inst_t s  = (*inst >> 26) & 0x1u,    // 26
+                 u  = (*inst >> 16) & 0x3FFu,  // 25-16
+                 l  =  *inst        & 0x7FFu, // 10-0
+                 j1 = (*inst >> 13) & 0x1u,    // 13
+                 j2 = (*inst >> 11) & 0x1u;    // 11
+          Inst_t i1 = (~(j1 ^ s)) & 0x1u,
+                 i2 = (~(j2 ^ s)) & 0x1u;
+          // [31-25][24][23][22][21-12][11-1][0]
+          //      0   s  i1  i2      u     l  0
+          A = SIGN_EXTEND((s << 23) | (i1 << 22) | (i2 << 21) | (u << 11) | l, 24);
+          A <<= 1;
+        }
 #undef SIGN_EXTEND
 
         void *callee_addr = sym->getAddress(EM_ARM);
@@ -214,19 +244,52 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
         //LOGI("Function %s: using stub %p\n", sym->getName(), stub);
         S = (uint32_t)(uintptr_t)stub;
 
-        // Relocate the R_ARM_CALL relocation type
-        uint32_t result = (S >> 2) - (P >> 2) + A;
+        if (rel->getType() == R_ARM_CALL) {
+          // Relocate the R_ARM_CALL relocation type
+          uint32_t result = (S + A - P) >> 2;
 
-        if (result > 0x007fffff && result < 0xff800000) {
-          rsl_assert(0 && "Stub is still too far");
-          abort();
+          if (result > 0x007FFFFF && result < 0xFF800000) {
+            rsl_assert(0 && "Stub is still too far");
+            abort();
+          }
+
+          *inst = ((result) & 0x00FFFFFF) | (*inst & 0xFF000000);
         }
+        else {
+          // Relocate the R_ARM_THM_CALL relocation type
+          uint32_t result = (S + A - P) >> 1;
 
-        *inst = ((result) & 0x00FFFFFF) | (*inst & 0xFF000000);
+          if (result > 0x007FFFFF && result < 0xFF800000) {
+            rsl_assert(0 && "Stub is still too far");
+            abort();
+          }
+
+          // Rewrite instruction to BLX.
+          *inst &= 0xF800C000u;
+          // [31-25][24][23][22][21-12][11-1][0]
+          //      0   s  i1  i2      u     l  0
+          Inst_t s  = (result >> 23) & 0x1u,   // 26
+                 u  = (result >> 11) & 0x3FFu, // 25-16
+                 // For BLX, bit [0] is 0.
+                 l  =  result        & 0x7FEu, // 10-0
+                 i1 = (result >> 22) & 0x1u,
+                 i2 = (result >> 21) & 0x1u;
+          Inst_t j1 = ((~i1) ^ s) & 0x01u,       // 13
+                 j2 = ((~i2) ^ s) & 0x01u;       // 11
+          *inst |= s << 26;
+          *inst |= u << 16;
+          *inst |= l;
+          *inst |= j1 << 13;
+          *inst |= j2 << 11;
+          // Hack for two 16bit.
+          *inst = ((*inst >> 16) & 0xFFFF) | (*inst << 16);
+        }
       }
       break;
     case R_ARM_MOVT_ABS:
     case R_ARM_MOVW_ABS_NC:
+    case R_ARM_THM_MOVW_ABS_NC:
+    case R_ARM_THM_MOVT_ABS:
       {
         if (S==0 && sym->getType() == STT_NOTYPE)
         {
@@ -237,16 +300,43 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           S = (Inst_t)(uintptr_t)ext_sym;
           sym->setAddress(ext_sym);
         }
-        if (rel->getType() == R_ARM_MOVT_ABS) {
+        if (rel->getType() == R_ARM_MOVT_ABS
+            || rel->getType() == R_ARM_THM_MOVT_ABS) {
           S >>= 16;
         }
 
-        // No need sign extend.
-        A = ((*inst & 0xF0000) >> 4) | (*inst & 0xFFF);
-        uint32_t result = (S+A);
-        *inst = (((result) & 0xF000) << 4) |
-          ((result) & 0xFFF) |
-          (*inst & 0xFFF0F000);
+        if (rel->getType() == R_ARM_MOVT_ABS
+            || rel->getType() == R_ARM_MOVW_ABS_NC) {
+          // No need sign extend.
+          A = ((*inst & 0xF0000) >> 4) | (*inst & 0xFFF);
+          uint32_t result = (S + A);
+          *inst = (((result) & 0xF000) << 4) |
+            ((result) & 0xFFF) |
+            (*inst & 0xFFF0F000);
+        }
+        else {
+          // Hack for two 16bit.
+          *inst = ((*inst >> 16) & 0xFFFF) | (*inst << 16);
+          // imm16: [19-16][26][14-12][7-0]
+          A = (((*inst >>  4) & 0xF000u) |
+               ((*inst >> 15) & 0x0800u) |
+               ((*inst >>  4) & 0x0700u) |
+               ( *inst        & 0x00FFu));
+          uint32_t result;
+          if (rel->getType() == R_ARM_THM_MOVT_ABS) {
+            result = (S + A);
+          } else {
+            result = (S + A) | T;
+          }
+          // imm16: [19-16][26][14-12][7-0]
+          *inst &= 0xFBF08F00u;
+          *inst |= (result & 0xF000u) << 4;
+          *inst |= (result & 0x0800u) << 15;
+          *inst |= (result & 0x0700u) << 4;
+          *inst |= (result & 0x00FFu);
+          // Hack for two 16bit.
+          *inst = ((*inst >> 16) & 0xFFFF) | (*inst << 16);
+        }
       }
       break;
     }
