@@ -37,7 +37,9 @@ ELFSectionProgBits<Bitwidth>::read(Archiver &AR,
   ELFSectionProgBits *secp = new ELFSectionProgBits(machine);
   llvm::OwningPtr<ELFSectionProgBits> result(secp);
   size_t max_num_stubs = 0;
-  size_t alloc_size = (sh->getSize() + 3) / 4 * 4;
+  // Align section boundary to 4 bytes.
+  size_t section_size = (sh->getSize() + 3) / 4 * 4;
+  size_t alloc_size = section_size;
   StubLayout *stubs = result->getStubLayout();
   if (stubs) {
     // Compute the maximal possible numbers of stubs
@@ -66,7 +68,8 @@ ELFSectionProgBits<Bitwidth>::read(Archiver &AR,
   }
 
   if (stubs) {
-    stubs->initStubTable(result->chunk.getBuffer()+sh->getSize(), max_num_stubs);
+    stubs->initStubTable(result->chunk.getBuffer() + section_size,
+                         max_num_stubs);
   }
 
   result->sh = sh;
