@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, The Android Open Source Project
+ * Copyright 2011-2012, The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include "cutils/log.h"
 
 #include <llvm/ADT/OwningPtr.h>
+#include <llvm/Support/ELF.h>
 
 static inline RSExecRef wrap(ELFObject<32> *object) {
   return reinterpret_cast<RSExecRef>(object);
@@ -56,6 +57,28 @@ rsloaderCreateExec(unsigned char const *buf,
   }
 
   return wrap(object.take());
+}
+
+extern "C" void rsloaderUpdateSectionHeaders(RSExecRef object_,
+                                             unsigned char *buf) {
+  ELFObject<32> *object = unwrap(object_);
+
+  // Remap the section header addresses to match the loaded code
+  llvm::ELF::Elf32_Ehdr* header = reinterpret_cast<llvm::ELF::Elf32_Ehdr*>(buf);
+
+  llvm::ELF::Elf32_Shdr* shtab =
+      reinterpret_cast<llvm::ELF::Elf32_Shdr*>(buf + header->e_shoff);
+
+  for (int i = 0; i < header->e_shnum; i++) {
+    if (shtab[i].sh_flags & SHF_ALLOC) {
+      ELFSectionBits<32>* bits =
+          static_cast<ELFSectionBits<32>*>(object->getSectionByIndex(i));
+      if (bits) {
+        const unsigned char* addr = bits->getBuffer();
+        shtab[i].sh_addr = reinterpret_cast<llvm::ELF::Elf32_Addr>(addr);
+      }
+    }
+  }
 }
 
 extern "C" void rsloaderDisposeExec(RSExecRef object) {
