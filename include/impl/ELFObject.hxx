@@ -169,8 +169,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
         if (rel->getType() == R_ARM_CALL) {
           A = (Inst_t)(int64_t)SIGN_EXTEND(*inst & 0xFFFFFF, 24);
           A <<= 2;
-        }
-        else {
+        } else {
           // Hack for two 16bit.
           *inst = ((*inst >> 16) & 0xFFFF) | (*inst << 16);
           Inst_t s  = (*inst >> 26) & 0x1u,    // 26
@@ -248,9 +247,8 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           }
 
           *inst = ((result) & 0x00FFFFFF) | (*inst & 0xFF000000);
-        }
-        else {
-          P &= ~0x3;  // Base address align to 4 bytes.(For BLX.)
+        } else {
+          P &= ~0x3;  // Base address align to 4 bytes.  (For BLX.)
 
           // Relocate the R_ARM_THM_CALL relocation type
           uint32_t result = (S + A - P) >> 1;
@@ -261,7 +259,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           }
 
           //*inst &= 0xF800D000u;
-          // Rewrite instruction to BLX.(Stub is always ARM.)
+          // Rewrite instruction to BLX.  (Stub is always ARM.)
           *inst &= 0xF800C000u;
           // [31-25][24][23][22][21-12][11-1][0]
           //      0   s  i1  i2      u     l  0
@@ -310,8 +308,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
           *inst = (((result) & 0xF000) << 4) |
             ((result) & 0xFFF) |
             (*inst & 0xFFF0F000);
-        }
-        else {
+        } else {
           // Hack for two 16bit.
           *inst = ((*inst >> 16) & 0xFFFF) | (*inst << 16);
           // imm16: [19-16][26][14-12][7-0]
@@ -510,8 +507,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
           A |= ((P + 4) & 0xF0000000);
           A += S;
           *inst |= ((A >> 2) & 0x3FFFFFF);
-        }
-        else { // external binding
+        } else { // external binding
           if (A & 0x08000000) // Sign extend from bit 27
             A |= 0xF0000000;
           A += S;
@@ -525,8 +521,7 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
             rsl_assert(((P + 4) >> 28) == (S >> 28) && "stub is too far.");
           }
         }
-      }
-      else { // shared-library call
+      } else { // shared-library call
         A = (A & 0x3FFFFFF) << 2;
         rsl_assert(A == 0 && "R_MIPS_26 addend is not zero.");
         void *stub = text->getStubLayout()->allocateStub((void *)S);
@@ -590,12 +585,10 @@ relocateMIPS(void *(*find_sym)(void *context, char const *name),
                 break;
               }
             }
-          }
-          else {
+          } else {
             rsl_assert(A == 0 && "R_MIPS_GOT16 addend is not 0.");
           }
-        }
-        else { // R_MIPS_CALL16
+        } else { // R_MIPS_CALL16
           rsl_assert(A == 0 && "R_MIPS_CALL16 addend is not 0.");
         }
         int got_index = search_got((int)rel->getSymTabIndex(), (void *)(S + A),
