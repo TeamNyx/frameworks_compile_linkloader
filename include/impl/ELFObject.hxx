@@ -156,6 +156,14 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
 
     case R_ARM_ABS32:
       {
+        if (S == 0 && sym->getType() == STT_NOTYPE) {
+          void *ext_sym = find_sym(context, sym->getName());
+          if (!ext_sym) {
+            missingSymbols = true;
+          }
+          S = (Inst_t)(uintptr_t)ext_sym;
+          sym->setAddress(ext_sym);
+        }
         A = *inst;
         *inst = (S + A) | T;
       }
@@ -286,8 +294,7 @@ relocateARM(void *(*find_sym)(void *context, char const *name),
     case R_ARM_THM_MOVW_ABS_NC:
     case R_ARM_THM_MOVT_ABS:
       {
-        if (S==0 && sym->getType() == STT_NOTYPE)
-        {
+        if (S == 0 && sym->getType() == STT_NOTYPE) {
           void *ext_sym = find_sym(context, sym->getName());
           if (!ext_sym) {
             missingSymbols = true;
