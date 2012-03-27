@@ -25,11 +25,19 @@ extern "C" {
 
 struct RSExecOpaque;
 typedef struct RSExecOpaque *RSExecRef;
+typedef void *(*RSFindSymbolFn)(void *, char const *);
 
 RSExecRef rsloaderCreateExec(unsigned char const *buf,
                              size_t buf_size,
-                             void *(*find_symbol)(void *, char const *),
+                             RSFindSymbolFn find_symbol,
                              void *find_symbol_context);
+
+RSExecRef rsloaderLoadExecutable(unsigned char const *buf,
+                                 size_t buf_size);
+
+int rsloaderRelocateExecutable(RSExecRef object,
+                               RSFindSymbolFn find_symbol,
+                               void *find_symbol_context);
 
 void rsloaderUpdateSectionHeaders(RSExecRef object, unsigned char *buf);
 

@@ -36,12 +36,25 @@ static inline ELFObject<32> *unwrap(RSExecRef object) {
   return reinterpret_cast<ELFObject<32> *>(object);
 }
 
-extern "C" RSExecRef
-rsloaderCreateExec(unsigned char const *buf,
-                   size_t buf_size,
-                   void *(*find_symbol)(void *, char const *),
-                   void *find_symbol_context) {
+extern "C" RSExecRef rsloaderCreateExec(unsigned char const *buf,
+                                        size_t buf_size,
+                                        RSFindSymbolFn find_symbol,
+                                        void *find_symbol_context) {
+  RSExecRef object = rsloaderLoadExecutable(buf, buf_size);
+  if (!object) {
+    return NULL;
+  }
 
+  if (!rsloaderRelocateExecutable(object, find_symbol, find_symbol_context)) {
+    rsloaderDisposeExec(object);
+    return NULL;
+  }
+
+  return object;
+}
+
+extern "C" RSExecRef rsloaderLoadExecutable(unsigned char const *buf,
+                                            size_t buf_size) {
   ArchiveReaderLE AR(buf, buf_size);
 
   llvm::OwningPtr<ELFObject<32> > object(ELFObject<32>::read(AR));
@@ -50,13 +63,16 @@ rsloaderCreateExec(unsigned char const *buf,
     return NULL;
   }
 
-  //object->print();
-  object->relocate(find_symbol, find_symbol_context);
-  if (object->getMissingSymbols()) {
-    return NULL;
-  }
-
   return wrap(object.take());
+}
+
+extern "C" int rsloaderRelocateExecutable(RSExecRef object_,
+                                          RSFindSymbolFn find_symbol,
+                                          void *find_symbol_context) {
+  ELFObject<32>* object = unwrap(object_);
+
+  object->relocate(find_symbol, find_symbol_context);
+  return (object->getMissingSymbols() == 0);
 }
 
 extern "C" void rsloaderUpdateSectionHeaders(RSExecRef object_,
